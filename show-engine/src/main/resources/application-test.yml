@@ -1,0 +1,21 @@
+show-engine:
+  pitcher:
+    cli-path: claude
+    timeout-seconds: 10
+    model: claude-haiku-4-5
+  catcher:
+    cli-path: gemini
+    timeout-seconds: 10
+    model: gemini-3.5-flash
+  fielder:
+    cli-path: codex
+    timeout-seconds: 10
+    model: ""
+  sessions:
+    data-dir: target/test-sessions
+  classifier:
+    log-dir: target/test-intent-logs
+
+logging:
+  level:
+    com.showengine: DEBUG
