@@ -34,10 +34,8 @@ playwright-report
 *.njsproj
 *.sln
 *.sw?
-eval_report.md
 ARCH_STATUS.md
 CHANGELOG.md
 CLAUDE.md
-eval_report.md
 start.sh
 stop.sh
