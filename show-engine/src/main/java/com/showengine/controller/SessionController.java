@@ -22,6 +22,14 @@ public class SessionController {
         return sessionPersistenceService.listSummaries();
     }
 
+    @GetMapping("/search")
+    public List<Map<String, Object>> search(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        return sessionPersistenceService.searchSummaries(q, limit);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<JsonNode> get(@PathVariable String id) {
         return sessionPersistenceService.load(id)

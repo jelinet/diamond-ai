@@ -3,7 +3,7 @@ import { PLAYER_MAP } from '../constants/players'
 export function DecompositionCard({ decomposition, onConfirm, onCancel }) {
   return (
     <div className="decomp-card">
-      <div className="decomp-header">Master 已完成任务拆分，请确认分工后开始执行：</div>
+      <div className="decomp-header">Master has decomposed the task. Confirm the assignments to begin execution:</div>
       {decomposition.subtasks.map(subtask => {
         const player = PLAYER_MAP[subtask.player]
         return (
@@ -11,7 +11,7 @@ export function DecompositionCard({ decomposition, onConfirm, onCancel }) {
             <span className="decomp-player" style={{ color: player?.color }}>{player?.emoji} {subtask.player}</span>
             <div className="decomp-detail">
               <div className="decomp-task">{subtask.taskDescription}</div>
-              <div className="decomp-deliver">产出：{subtask.deliverable}</div>
+              <div className="decomp-deliver">Deliverable: {subtask.deliverable}</div>
             </div>
           </div>
         )

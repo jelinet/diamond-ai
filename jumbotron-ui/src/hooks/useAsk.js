@@ -87,7 +87,7 @@ function normalizeTurn(turn) {
 function normalizeSession(session) {
   return {
     id: session.id || session.conversationId,
-    title: session.title || 'New conversation',
+    title: session.title || 'New chat',
     masterPlayer: session.masterPlayer || 'PITCHER',
     createdAt: session.createdAt || Date.now(),
     turns: (session.turns || []).map(normalizeTurn),
@@ -103,6 +103,21 @@ function mergeSessions(existing, incoming) {
   })
 
   return Array.from(byId.values())
+}
+
+function sumTokenInfo(turns = []) {
+  return turns.reduce((acc, turn) => {
+    Object.entries(turn?.tokens || {}).forEach(([player, tokenInfo]) => {
+      const inputTokens = Number(tokenInfo?.in || 0)
+      const outputTokens = Number(tokenInfo?.out || 0)
+      const current = acc[player] || { in: 0, out: 0 }
+      acc[player] = {
+        in: current.in + inputTokens,
+        out: current.out + outputTokens,
+      }
+    })
+    return acc
+  }, {})
 }
 
 export function useAsk() {
@@ -621,6 +636,7 @@ export function useAsk() {
   const activeSession = sessions.find(session => session.id === activeId) || null
   const activeTurn = activeSession ? [...(activeSession.turns || [])].pop() : null
   const isLoading = activeId ? !!loadingByConversation[activeId] : false
+  const sessionTokens = sumTokenInfo(activeSession?.turns || [])
 
   return {
     sessions,
@@ -628,7 +644,7 @@ export function useAsk() {
     activeSession,
     masterPlayer: activeSession?.masterPlayer || currentMaster,
     streaming: activeTurn?.answers || {},
-    tokens: activeTurn?.tokens || {},
+    tokens: sessionTokens,
     playerStatus,
     playerTasks,
     isLoading,

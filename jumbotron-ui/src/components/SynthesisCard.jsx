@@ -8,15 +8,12 @@ export function SynthesisCard({ text, isStreaming, masterPlayer }) {
     <div className="synthesis-card">
       <div className="synthesis-header">
         {master && <span className="synthesis-master-emoji">{master.emoji}</span>}
-        <span className="synthesis-title">最终结论</span>
+        <span className="synthesis-title">Final Conclusion</span>
         {isStreaming && <span className="badge thinking">generating…</span>}
       </div>
       <div className="synthesis-body">
         {text ? (
-          <>
-            <MarkdownText text={text} className="synthesis-text" />
-            {isStreaming ? <span className="cursor" /> : null}
-          </>
+          <MarkdownText text={text} className="synthesis-text" />
         ) : <p className="player-placeholder">Generating…</p>}
       </div>
     </div>

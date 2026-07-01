@@ -42,17 +42,28 @@ public class SessionPersistenceService {
 
     /** Reads all session summaries, sorted by createdAt descending. */
     public List<Map<String, Object>> listSummaries() {
+        return searchSummaries("", Integer.MAX_VALUE);
+    }
+
+    public List<Map<String, Object>> searchSummaries(String query, int limit) {
         List<Map<String, Object>> result = new ArrayList<>();
+        String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        int maxResults = Math.max(0, limit);
+
         try (Stream<Path> files = Files.list(dataDir)) {
             files.filter(p -> p.toString().endsWith(".json"))
                  .forEach(file -> {
                      try {
                          JsonNode node = objectMapper.readTree(file.toFile());
+                         if (isEmptyNewChat(node)) return;
+                         if (!matchesSession(node, normalizedQuery)) return;
+
                          Map<String, Object> summary = new LinkedHashMap<>();
                          summary.put("id",           node.path("id").asText(""));
                          summary.put("title",        node.path("title").asText(""));
                          summary.put("masterPlayer", node.path("masterPlayer").asText(""));
                          summary.put("createdAt",    node.path("createdAt").asLong(0));
+                         summary.put("lastQuestion", lastQuestion(node));
                          result.add(summary);
                      } catch (IOException e) {
                          log.warn("跳过损坏的 session 文件: {}", file, e);
@@ -62,7 +73,37 @@ public class SessionPersistenceService {
             log.error("读取 sessions 目录失败", e);
         }
         result.sort(Comparator.comparingLong(s -> -((Long) s.get("createdAt"))));
-        return result;
+        return maxResults >= result.size() ? result : result.subList(0, maxResults);
+    }
+
+    private boolean matchesSession(JsonNode node, String query) {
+        if (query == null || query.isBlank()) return true;
+        if (node.path("title").asText("").toLowerCase(Locale.ROOT).contains(query)) return true;
+
+        for (JsonNode turn : node.path("turns")) {
+            if (turn.path("question").asText("").toLowerCase(Locale.ROOT).contains(query)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isEmptyNewChat(JsonNode node) {
+        String title = node.path("title").asText("");
+        JsonNode turns = node.path("turns");
+        boolean emptyTurns = !turns.isArray() || turns.isEmpty();
+        return emptyTurns && ("New conversation".equals(title) || "New chat".equals(title));
+    }
+
+    private String lastQuestion(JsonNode node) {
+        JsonNode turns = node.path("turns");
+        if (!turns.isArray()) return "";
+
+        for (int i = turns.size() - 1; i >= 0; i--) {
+            String question = turns.get(i).path("question").asText("");
+            if (!question.isBlank()) return question;
+        }
+        return "";
     }
 
     public void delete(String id) {

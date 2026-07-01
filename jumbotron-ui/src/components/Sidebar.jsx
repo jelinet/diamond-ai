@@ -1,10 +1,36 @@
 import { useState } from 'react'
 import { MasterSelectPanel } from './MasterSelectPanel'
 
-export function Sidebar({ sessions, activeId, onSelect, onNew, masterSelectPending, onMasterSelect, onCancelMasterSelect }) {
+function getSessionTime(session) {
+  const value = session?.createdAt
+  if (!value) return Date.now()
+
+  if (typeof value === 'number') return value
+
+  const parsed = Date.parse(value)
+  return Number.isNaN(parsed) ? Date.now() : parsed
+}
+
+function getThreeMonthCutoff() {
+  const cutoff = new Date()
+  cutoff.setMonth(cutoff.getMonth() - 3)
+  return cutoff.getTime()
+}
+
+function isEmptyNewChat(session) {
+  return ['New chat', 'New conversation'].includes(session.title) && (session.turns?.length || 0) === 0
+}
+
+function chatTitle(session) {
+  return session?.title === 'New conversation' ? 'New chat' : session?.title
+}
+
+export function Sidebar({ sessions, activeId, onSelect, onNew, onSearch, masterSelectPending, onMasterSelect, onCancelMasterSelect }) {
   const [recentsOpen, setRecentsOpen] = useState(true)
+  const threeMonthCutoff = getThreeMonthCutoff()
   const visibleSessions = sessions.filter(session =>
-    session.title !== 'New conversation' || (session.turns?.length || 0) > 0
+    getSessionTime(session) >= threeMonthCutoff &&
+    !isEmptyNewChat(session)
   )
 
   return (
@@ -28,7 +54,7 @@ export function Sidebar({ sessions, activeId, onSelect, onNew, masterSelectPendi
             <MasterSelectPanel onSelect={onMasterSelect} onCancel={onCancelMasterSelect} />
           </div>
         )}
-        <button className="sidebar-menu-btn" type="button">
+        <button className="sidebar-menu-btn" type="button" onClick={onSearch}>
           <span className="sidebar-menu-icon" aria-hidden="true">
             <svg className="sidebar-line-icon" viewBox="0 0 24 24" focusable="false">
               <circle cx="11" cy="11" r="7" />
@@ -38,35 +64,41 @@ export function Sidebar({ sessions, activeId, onSelect, onNew, masterSelectPendi
           <span>Search chats</span>
         </button>
       </div>
-      <button
-        className="recents-toggle"
-        type="button"
-        aria-expanded={recentsOpen}
-        onClick={() => setRecentsOpen(open => !open)}
-      >
-        <span>Recents</span>
-        <span className="recents-toggle-icon" aria-hidden="true">{recentsOpen ? '⌄' : '›'}</span>
-      </button>
-      {recentsOpen && (
-        <ul className="session-list">
-          {visibleSessions.length === 0 && !masterSelectPending && (
-            <li className="session-empty">No conversations yet</li>
-          )}
-          {[...visibleSessions]
-            .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
-            .map(session => (
-            <li
-              key={session.id}
-              className={`session-item ${session.id === activeId ? 'active' : ''}`}
-              onClick={() => onSelect(session)}
-            >
-              <div className="session-item-top">
-                <span className="session-q">{session.title}</span>
-              </div>
-            </li>
-            ))}
-        </ul>
-      )}
+      <div className="session-history">
+        <button
+          className="recents-toggle"
+          type="button"
+          aria-expanded={recentsOpen}
+          onClick={() => setRecentsOpen(open => !open)}
+        >
+          <span>Recents</span>
+          <span className={`disclosure-icon ${recentsOpen ? 'open' : ''}`} aria-hidden="true">
+            <svg className="disclosure-chevron" viewBox="0 0 16 16" focusable="false">
+              <path d="M6 4l4 4-4 4" />
+            </svg>
+          </span>
+        </button>
+        {recentsOpen && (
+          <ul className="session-list">
+            {visibleSessions.length === 0 && !masterSelectPending && (
+              <li className="session-empty">No chats yet</li>
+            )}
+            {[...visibleSessions]
+              .sort((a, b) => getSessionTime(b) - getSessionTime(a))
+              .map(session => (
+              <li
+                key={session.id}
+                className={`session-item ${session.id === activeId ? 'active' : ''}`}
+                onClick={() => onSelect(session)}
+              >
+                <div className="session-item-top">
+                  <span className="session-q">{chatTitle(session)}</span>
+                </div>
+              </li>
+              ))}
+          </ul>
+        )}
+      </div>
     </aside>
   )
 }
