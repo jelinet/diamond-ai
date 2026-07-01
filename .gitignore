@@ -1,11 +1,15 @@
 target/
+**/target/
+**/.DS_Store
 .DS_Store
+.idea
+**/.idea
+
 *.log
 .venv/
 .cache/
 __pycache__/
 *.py[cod]
-**/target/
 **/node_modules/
 **/dist/
 .claude/settings.local.json
@@ -22,11 +26,9 @@ test-results
 playwright-report
 *.local
 
-# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+
 *.suo
 *.ntvs*
 *.njsproj
