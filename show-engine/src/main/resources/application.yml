@@ -1,0 +1,46 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: show-engine
+  mvc:
+    async:
+      # SSE timeout: 5 minutes
+      request-timeout: 300000
+
+show-engine:
+  pitcher:
+    # Claude Code CLI executable path
+    cli-path: /Users/jelinet/.nvm/versions/node/v24.14.1/bin/claude
+    # Timeout for CLI process in seconds
+    timeout-seconds: 60
+    # Model to use (passed to claude CLI)
+    model: claude-sonnet-4-5
+  catcher:
+    # Antigravity CLI executable path
+    cli-path: /Users/jelinet/.local/bin/agy
+    # Timeout for CLI process in seconds
+    timeout-seconds: 60
+    # Model to use (blank = agy default)
+    model:
+  fielder:
+    # Codex CLI executable path
+    cli-path: /Users/jelinet/.nvm/versions/node/v24.14.1/bin/codex
+    # Timeout for CLI process in seconds
+    timeout-seconds: 60
+    # Blank = use Codex CLI default model
+    model:
+  sessions:
+    data-dir: ${user.home}/.show-engine/sessions
+  classifier:
+    enabled: true
+    confidence-threshold: 0.75
+    prototypes-path: ${SHOW_ENGINE_MODEL_DIR:${user.dir}/../model/v1}/prototypes.json
+    model-path: ${SHOW_ENGINE_MODEL_DIR:${user.dir}/../model/v1}/encoder.onnx
+    log-dir: ${user.home}/.show-engine/intent-logs
+
+logging:
+  level:
+    com.showengine: DEBUG
+    org.springframework.web: INFO
