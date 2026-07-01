@@ -54,7 +54,7 @@ export function TaskPanel({ playerStatus, playerTasks, streaming, tokens, master
                   <span>{wordCount} words</span>
                 </div>
               )}
-              {status === 'done' && tokenInfo && (
+              {status !== 'thinking' && tokenInfo && (
                 <div className="task-tokens">
                   <div className="token-row"><span>Input</span><strong>{tokenInfo.in}</strong></div>
                   <div className="token-row"><span>Output</span><strong>{tokenInfo.out}</strong></div>
@@ -63,7 +63,7 @@ export function TaskPanel({ playerStatus, playerTasks, streaming, tokens, master
               )}
               {status === 'error' && <span className="task-error-msg">Failed to respond</span>}
               {status === 'stopped' && <span className="task-stopped-msg">Cancelled</span>}
-              {status === 'idle' && !task && <span className="task-idle-msg">Ready</span>}
+              {status === 'idle' && !task && !tokenInfo && <span className="task-idle-msg">Ready</span>}
             </div>
           </div>
         )

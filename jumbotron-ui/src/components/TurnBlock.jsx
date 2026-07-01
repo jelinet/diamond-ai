@@ -19,6 +19,7 @@ export function TurnBlock({ turn, isCurrent, playerStatus, masterPlayer, detailR
   const isSinglePlayerStreaming = isCurrent && singlePlayer && playerStatus[singlePlayer.key] === 'thinking'
   const showSynthesisCard = !!finalText || isSynthesising || isSinglePlayerStreaming
   const intentType = typeof turn.intent === 'string' ? turn.intent : turn.intent?.intentType
+  const intentLabel = intentType === 'ANALYZE' ? 'Analyze' : intentType === 'EXECUTE' ? 'Execute' : ''
 
   useEffect(() => {
     if (!isCurrent || !detailRequest?.player) return
@@ -32,9 +33,9 @@ export function TurnBlock({ turn, isCurrent, playerStatus, masterPlayer, detailR
   return (
     <section className="turn-block" ref={blockRef}>
       <div className="user-question">
-        {intentType && (
+        {intentLabel && (
           <span className={`intent-badge intent-${intentType.toLowerCase()}`}>
-            {intentType === 'ANALYZE' ? '分析' : intentType === 'EXECUTE' ? '执行' : ''}
+            {intentLabel}
           </span>
         )}
         {turn.question}
@@ -62,11 +63,16 @@ export function TurnBlock({ turn, isCurrent, playerStatus, masterPlayer, detailR
                   onClick={() => setExpandedPlayer(isExpanded ? null : player.key)}
                   style={{ borderColor: isExpanded ? player.color : undefined }}
                   aria-expanded={isExpanded}
+                  aria-label={`${player.label} ${isExpanded ? 'Collapse' : 'Expand'}`}
                 >
                   <span>{player.emoji}</span>
                   <span>{player.label}</span>
                   <span className={`process-tab-status st-${status}`}>{status}</span>
-                  <span className="process-tab-toggle">{isExpanded ? '收起' : '展开'}</span>
+                  <span className={`process-tab-toggle disclosure-icon ${isExpanded ? 'open' : ''}`} aria-hidden="true">
+                    <svg className="disclosure-chevron" viewBox="0 0 16 16" focusable="false">
+                      <path d="M6 4l4 4-4 4" />
+                    </svg>
+                  </span>
                 </button>
               )
             })}

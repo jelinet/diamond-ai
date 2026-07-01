@@ -19,9 +19,9 @@ describe('DecompositionCard', () => {
     render(<DecompositionCard decomposition={decomposition} onConfirm={onConfirm} onCancel={onCancel} />)
 
     expect(screen.getByText('Structure the plan')).toBeInTheDocument()
-    expect(screen.getByText('产出：Risk list')).toBeInTheDocument()
+    expect(screen.getByText('Deliverable: Risk list')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Confirmed,commencing execution./ }))
+    await user.click(screen.getByRole('button', { name: /Confirmed; commencing execution./ }))
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(onConfirm).toHaveBeenCalledOnce()

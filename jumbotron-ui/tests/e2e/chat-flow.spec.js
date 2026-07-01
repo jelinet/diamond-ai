@@ -10,7 +10,7 @@ test('runs an analyze flow with mocked SSE responses', async ({ page }) => {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify([
-        { id: 'historical-session', title: 'Loaded history', masterPlayer: 'FIELDER', createdAt: 1234567890 },
+        { id: 'historical-session', title: 'Loaded history', masterPlayer: 'FIELDER', createdAt: Date.now() },
       ]),
     })
   })
@@ -94,7 +94,7 @@ test('loads a persisted session when a history item is selected', async ({ page 
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify([
-        { id: 'historical-session', title: 'Loaded history', masterPlayer: 'FIELDER', createdAt: 1234567890 },
+        { id: 'historical-session', title: 'Loaded history', masterPlayer: 'FIELDER', createdAt: Date.now() },
       ]),
     })
   })
@@ -108,7 +108,7 @@ test('loads a persisted session when a history item is selected', async ({ page 
         id: 'historical-session',
         title: 'Loaded history',
         masterPlayer: 'FIELDER',
-        createdAt: 1234567890,
+        createdAt: Date.now(),
         turns: [
           {
             id: 'turn-history',

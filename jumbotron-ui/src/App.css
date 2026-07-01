@@ -129,12 +129,26 @@ body {
   text-align: left;
 }
 .recents-toggle:hover { color: var(--text); }
-.recents-toggle-icon {
+.disclosure-icon {
   width: 18px;
+  height: 18px;
   display: inline-flex;
+  align-items: center;
   justify-content: center;
-  font-size: 13px;
-  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform 0.15s ease;
+}
+.disclosure-icon.open {
+  transform: rotate(90deg);
+}
+.disclosure-chevron {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .new-btn {
@@ -152,8 +166,16 @@ body {
 }
 .new-btn:hover { background: var(--bg); color: var(--text); }
 
+.session-history {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .session-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   list-style: none;
   padding: 8px 0;
@@ -274,6 +296,136 @@ body {
 .welcome-title { font-size: 20px; font-weight: 600; color: var(--text); }
 .welcome-sub { font-size: 14px; }
 
+.search-chats-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 20px;
+}
+.search-chats-inner {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.search-input-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+.search-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.search-chats-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 42px 0 42px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.search-chats-input:focus {
+  border-color: #4f46e5;
+}
+.search-chats-input::-webkit-search-cancel-button {
+  appearance: none;
+}
+.search-clear-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.search-clear-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+.search-clear-icon {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.search-result-item {
+  width: 100%;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.search-result-item:hover {
+  background: #f3f4f6;
+}
+.search-result-content {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+.search-result-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-result-preview {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-result-date {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.search-empty {
+  padding: 20px 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
 .inline-master-select {
   max-width: 640px;
   width: 100%;
@@ -296,11 +448,14 @@ body {
   white-space: pre-wrap;
 }
 
-/* ── Conversation turns ── */
+/* ── Chat turns ── */
 .turn-block {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  max-width: 880px;
+  align-self: center;
 }
 
 .turn-block + .turn-block {
@@ -310,7 +465,7 @@ body {
 
 .user-question {
   align-self: flex-end;
-  max-width: min(720px, 88%);
+  max-width: min(720px, 100%);
   padding: 10px 14px;
   border: 1px solid #c7d2fe;
   border-radius: var(--radius);
@@ -319,6 +474,7 @@ body {
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* ── Player card ── */
@@ -719,9 +875,9 @@ body {
   border-radius: 10px;
 }
 .process-tab-toggle {
-  font-size: 10px;
   color: var(--text-muted);
-  padding-left: 2px;
+  margin-left: 2px;
+  flex-shrink: 0;
 }
 .process-card-wrap { margin-top: 8px; }
 

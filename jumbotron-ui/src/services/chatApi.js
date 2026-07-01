@@ -33,6 +33,20 @@ export async function listSessions() {
   return response.json()
 }
 
+export async function searchSessions(query = '', limit = 10) {
+  const params = new URLSearchParams({
+    q: query,
+    limit: String(limit),
+  })
+  const response = await fetch(`${API_BASE}/sessions/search?${params.toString()}`)
+
+  if (!response.ok) {
+    throw new Error(`Failed to search sessions: ${response.status}`)
+  }
+
+  return response.json()
+}
+
 export async function getSession(sessionId) {
   const response = await fetch(`${API_BASE}/sessions/${encodeURIComponent(sessionId)}`)
 
