@@ -79,7 +79,6 @@ public class ConversationServiceImpl implements ConversationService {
     private void detectAndRoute(SseEmitter emitter, String conversationId,
                                 String question, PlayerEnum masterPlayer, AskRequest request) {
         IntentResult intentResult = intentRouterService.route(request);
-        sendIntentEvent(emitter, intentResult);
 
         switch (intentResult.getIntentType()) {
             case CHAT, UNKNOWN                    -> singlePlayerFlow(emitter, conversationId, question, masterPlayer);
@@ -310,14 +309,33 @@ public class ConversationServiceImpl implements ConversationService {
                                      String question, AskRequest request) {
         String msg;
         if (SWITCH_PLAYER_PATTERN.matcher(question).find()) {
-            // Parse @XXX and switch the Master.
-            var matcher = SWITCH_PLAYER_PATTERN.matcher(question);
-            if (matcher.find()) {
-                PlayerEnum target = resolvePlayerAlias(matcher.group(1));
-                sessionMasters.put(conversationId, target);
-                msg = "已切换到 " + target.name();
-            } else {
+            List<PlayerEnum> targets = extractMentionedPlayers(question);
+            String cleanedQuestion = cleanMentionQuestion(question);
+
+            if (!targets.isEmpty() && !cleanedQuestion.isBlank()) {
+                Map<PlayerEnum, String> assignments = splitMentionAssignments(question);
+                if (assignments.size() >= 2) {
+                    mentionAssignedFlow(emitter, conversationId, assignments);
+                } else if (targets.size() == 1) {
+                    singlePlayerFlow(emitter, conversationId, cleanedQuestion, targets.get(0));
+                } else {
+                    mentionSharedFlow(emitter, conversationId, cleanedQuestion, targets);
+                }
+                return;
+            }
+
+            // Pure @XXX switches the session Master.
+            PlayerEnum target = !targets.isEmpty() ? targets.get(0) : null;
+            if (target == null) {
                 msg = "未识别到目标 Player，请使用 @PITCHER / @CATCHER / @FIELDER";
+            } else {
+                sessionMasters.put(conversationId, target);
+                SseUtils.sendEvent(emitter, "master", Map.of(
+                        "masterPlayer", target.name(),
+                        "message", "已切换到 " + target.name()));
+                SseUtils.sendEvent(emitter, "done", "完成");
+                SseUtils.complete(emitter);
+                return;
             }
         } else if (CLEAR_PATTERN.matcher(question).find()) {
             // Clear the conversation by resetting current state and opening a new session.
@@ -333,6 +351,84 @@ public class ConversationServiceImpl implements ConversationService {
         SseUtils.sendEvent(emitter, "synthesis", Map.of("chunk", msg));
         SseUtils.sendEvent(emitter, "done", "完成");
         SseUtils.complete(emitter);
+    }
+
+    private void mentionSharedFlow(SseEmitter emitter, String conversationId,
+                                   String question, List<PlayerEnum> targets) {
+        Map<PlayerEnum, String> assignments = new LinkedHashMap<>();
+        for (PlayerEnum target : targets) {
+            assignments.put(target, question);
+        }
+        mentionAssignedFlow(emitter, conversationId, assignments);
+    }
+
+    private void mentionAssignedFlow(SseEmitter emitter, String conversationId,
+                                     Map<PlayerEnum, String> assignments) {
+        sendPhase(emitter, "answering");
+        List<CompletableFuture<Void>> futures = assignments.entrySet().stream()
+                .map(entry -> CompletableFuture.runAsync(() -> {
+                    PlayerEnum player = entry.getKey();
+                    String assignedQuestion = entry.getValue();
+                    findPlayer(player.name()).ask(subId(conversationId, "mention-" + player.name()),
+                            assignedQuestion,
+                            chunk -> SseUtils.sendEvent(emitter, player.name().toLowerCase(), chunk));
+                }, executor))
+                .toList();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        SseUtils.sendEvent(emitter, "done", "完成");
+        SseUtils.complete(emitter);
+    }
+
+    private List<PlayerEnum> extractMentionedPlayers(String question) {
+        List<PlayerEnum> targets = new ArrayList<>();
+        var matcher = SWITCH_PLAYER_PATTERN.matcher(question);
+        while (matcher.find()) {
+            PlayerEnum target = resolvePlayerAlias(matcher.group(1));
+            if (!targets.contains(target)) {
+                targets.add(target);
+            }
+        }
+        return targets;
+    }
+
+    private String cleanMentionQuestion(String question) {
+        return stripMentionSeparators(SWITCH_PLAYER_PATTERN.matcher(question).replaceAll(""));
+    }
+
+    private Map<PlayerEnum, String> splitMentionAssignments(String question) {
+        record Mention(PlayerEnum player, int end, int nextStart) {}
+
+        List<Mention> mentions = new ArrayList<>();
+        var matcher = SWITCH_PLAYER_PATTERN.matcher(question);
+        PlayerEnum currentPlayer = null;
+        int currentEnd = -1;
+        while (matcher.find()) {
+            if (currentPlayer != null) {
+                mentions.add(new Mention(currentPlayer, currentEnd, matcher.start()));
+            }
+            currentPlayer = resolvePlayerAlias(matcher.group(1));
+            currentEnd = matcher.end();
+        }
+        if (currentPlayer != null) {
+            mentions.add(new Mention(currentPlayer, currentEnd, question.length()));
+        }
+
+        Map<PlayerEnum, String> assignments = new LinkedHashMap<>();
+        for (Mention mention : mentions) {
+            String assignedQuestion = stripMentionSeparators(question.substring(mention.end(), mention.nextStart()));
+            if (assignedQuestion.isBlank()) {
+                return Map.of();
+            }
+            assignments.putIfAbsent(mention.player(), assignedQuestion);
+        }
+        return assignments.size() >= 2 ? assignments : Map.of();
+    }
+
+    private String stripMentionSeparators(String text) {
+        return text == null ? "" : text
+                .replaceAll("^[\\s,，;；:：、。.!！?？-]+", "")
+                .replaceAll("[\\s,，;；:：、-]+$", "")
+                .trim();
     }
 
     private PlayerEnum resolvePlayerAlias(String alias) {
@@ -360,17 +456,6 @@ public class ConversationServiceImpl implements ConversationService {
 
     private void sendPhase(SseEmitter emitter, String phase) {
         SseUtils.sendEvent(emitter, "phase", Map.of("phase", phase));
-    }
-
-    private void sendIntentEvent(SseEmitter emitter, IntentResult intentResult) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("intentType",      intentResult.getIntentType().name());
-        payload.put("confidence",      intentResult.getConfidence());
-        payload.put("reason",          intentResult.getReason());
-        payload.put("source",          intentResult.getSource() != null ? intentResult.getSource().name() : null);
-        payload.put("routedPlayers",   intentResult.getRoutedPlayers());
-        payload.put("finalAnswerMode", intentResult.getFinalAnswerMode());
-        SseUtils.sendEvent(emitter, "intent", payload);
     }
 
     // Utility methods.

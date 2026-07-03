@@ -332,6 +332,20 @@ export function useAsk() {
         }))
         break
 
+      case EVENT.MASTER: {
+        const nextMaster = msg.masterPlayer || msg.master
+        if (!nextMaster) break
+
+        acc.master = nextMaster
+        if (isActiveConversation(conversationId)) {
+          setMaster(nextMaster)
+        }
+        setSessions(prev => prev.map(session =>
+          session.id === conversationId ? { ...session, masterPlayer: nextMaster } : session
+        ))
+        break
+      }
+
       case EVENT.SYNTHESIS:
         acc.synthesis = (acc.synthesis || '') + (msg.chunk || '')
         updateTurn(conversationId, turnId, turn => ({

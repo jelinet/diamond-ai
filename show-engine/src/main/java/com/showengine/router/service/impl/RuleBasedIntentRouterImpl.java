@@ -55,8 +55,13 @@ public class RuleBasedIntentRouterImpl implements IntentRouterService {
             Pattern.CASE_INSENSITIVE
     );
 
+    private static final Pattern CHAT_PATTERN = Pattern.compile(
+            ".*(你开心吗|你高兴吗|你难过吗|你怎么样|今天.*(开心|高兴|难过|不开心)|我的(猫|狗).*(开心|高兴|难过|不开心)).*",
+            Pattern.CASE_INSENSITIVE
+    );
+
     private static final Pattern SEARCH_PATTERN = Pattern.compile(
-            ".*(最新|今天|现在|实时|查一下|搜索|官网|新闻|价格|版本|政策).*",
+            ".*(最新|实时|查一下|查下|搜索|官网|新闻|价格|版本|政策|招聘|动态|汇率|股市|行情|天气|比赛结果|营业|附近|高铁票|演唱会|菜单|QPS|CPU使用率|下雨|温度|堵车|服务状态|调用量).*",
             Pattern.CASE_INSENSITIVE
     );
 
@@ -118,6 +123,9 @@ public class RuleBasedIntentRouterImpl implements IntentRouterService {
         }
         if (CODE_PATTERN.matcher(q).matches()) {
             return ruleResult(IntentTypeEnum.CODE, 0.85, "命中代码相关关键词");
+        }
+        if (CHAT_PATTERN.matcher(q).matches()) {
+            return ruleResult(IntentTypeEnum.CHAT, 0.85, "命中闲聊关键词");
         }
         if (SEARCH_PATTERN.matcher(q).matches()) {
             return ruleResult(IntentTypeEnum.SEARCH, 0.8, "命中搜索/实时信息关键词");
