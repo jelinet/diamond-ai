@@ -7,15 +7,15 @@ import ai.onnxruntime.OrtEnvironment;
 import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
 import com.showengine.config.ShowEngineProperties;
-import com.showengine.router.enums.IntentSource;
+import com.showengine.router.enums.IntentSourceEnum;
 import com.showengine.router.enums.IntentTypeEnum;
 import com.showengine.enums.PlayerEnum;
 import com.showengine.model.AskRequest;
 import com.showengine.router.model.IntentResult;
 import com.showengine.router.service.IntentLogWriter;
 import com.showengine.router.service.IntentRouterService;
+import com.showengine.utils.JacksonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -166,8 +166,6 @@ public class HybridIntentRouterImpl implements IntentRouterService {
     public static class ModelIntentRouterImpl implements IntentRouterService {
 
         private final ShowEngineProperties properties;
-        private final ObjectMapper objectMapper;
-
         private HuggingFaceTokenizer tokenizer;
         private OrtEnvironment ortEnv;
         private OrtSession ortSession;
@@ -247,7 +245,7 @@ public class HybridIntentRouterImpl implements IntentRouterService {
 
                 return new IntentResult(
                         IntentTypeEnum.valueOf(bestLabel), bestScore, "本地模型分类",
-                        IntentSource.MODEL, null, null);
+                        IntentSourceEnum.MODEL, null, null);
 
             } catch (Exception e) {
                 log.warn("ModelIntentRouter：推理失败，降级 UNKNOWN：{}", e.getMessage());
@@ -287,7 +285,7 @@ public class HybridIntentRouterImpl implements IntentRouterService {
         }
 
         private Map<String, float[]> loadPrototypes(String path) throws Exception {
-            JsonNode root = objectMapper.readTree(Paths.get(path).toFile());
+            JsonNode root = JacksonUtil.toJsonNode(java.nio.file.Files.readString(Paths.get(path)));
             Map<String, float[]> map = new LinkedHashMap<>();
             for (JsonNode intent : root.get("intents")) {
                 String label = intent.get("label").asText();
@@ -316,7 +314,7 @@ public class HybridIntentRouterImpl implements IntentRouterService {
         }
 
         private IntentResult fallback(String reason) {
-            return new IntentResult(IntentTypeEnum.UNKNOWN, 0.0, reason, IntentSource.MODEL, null, null);
+            return new IntentResult(IntentTypeEnum.UNKNOWN, 0.0, reason, IntentSourceEnum.MODEL, null, null);
         }
     }
 }

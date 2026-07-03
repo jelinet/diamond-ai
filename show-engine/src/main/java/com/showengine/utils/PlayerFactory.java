@@ -1,7 +1,7 @@
 package com.showengine.utils;
 
 import com.showengine.enums.PlayerEnum;
-import com.showengine.service.PlayerService;
+import com.showengine.players.service.PlayerService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

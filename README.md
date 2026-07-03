@@ -79,18 +79,23 @@ Each conversation selects one Master. The Master detects intent, coordinates the
   - rule layer
   - local ONNX classifier layer
   - LLM fallback layer
+- Standalone Supervisor layer:
+  - converts router results into execution plans
+  - orchestrates single-agent, two-phase code, three-agent debate, and decomposed task execution flows
+  - streams Supervisor / Player run state over SSE
+  - provides basic failure degradation so one failed Player does not necessarily stop the whole flow
 - Multi-agent task flow: decompose the task, ask the user to confirm, execute subtasks in parallel, and let the Master assemble the final answer.
 
 ## Not Implemented Yet
 
 Main gaps:
 
-- No standalone Supervisor layer yet.
 - No general Tools abstraction yet.
 - No ReAct loop yet.
 - No RAG layer yet.
 - Memory is currently limited to session persistence.
 - Reflection is structural only; autonomous self-review is not implemented yet.
+- Supervisor still lacks persisted recovery, fine-grained retry, pause/resume, and quality-review feedback loops.
 
 ## Backend: `show-engine`
 

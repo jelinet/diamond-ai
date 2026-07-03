@@ -1,8 +1,9 @@
 package com.showengine.service;
 
 import com.showengine.config.ShowEngineProperties;
-import com.showengine.model.PlayerResponse;
-import com.showengine.service.impl.CatcherServiceImpl;
+import com.showengine.players.enums.PlayerStatusEnum;
+import com.showengine.players.model.PlayerResponse;
+import com.showengine.players.service.impl.CatcherServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +53,7 @@ class CatcherGeminiIntegrationTest {
 
             catcherService.ask("test-conv-id", "1+1 equals what? Please respond with just the numeric answer.", chunk -> {
                 responses.add(chunk);
-                if (chunk.getStatus() == PlayerResponse.Status.DONE || chunk.getStatus() == PlayerResponse.Status.ERROR) {
+                if (chunk.getStatus() == PlayerStatusEnum.DONE || chunk.getStatus() == PlayerStatusEnum.ERROR) {
                     latch.countDown();
                 }
             });
@@ -62,7 +63,7 @@ class CatcherGeminiIntegrationTest {
 
             // Find the DONE event
             PlayerResponse doneResponse = responses.stream()
-                    .filter(r -> r.getStatus() == PlayerResponse.Status.DONE)
+                    .filter(r -> r.getStatus() == PlayerStatusEnum.DONE)
                     .findFirst()
                     .orElse(null);
 

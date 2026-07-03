@@ -2,7 +2,12 @@ package com.showengine.controller;
 
 import com.showengine.enums.PlayerEnum;
 import com.showengine.model.AskRequest;
+import com.showengine.model.CancelRequest;
+import com.showengine.model.StartSessionRequest;
+import com.showengine.model.StartSessionResponse;
+import com.showengine.model.sse.SessionEvent;
 import com.showengine.service.ConversationService;
+import com.showengine.utils.SseUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -50,27 +54,26 @@ public class AskController {
     }
 
     @PostMapping("/session")
-    public Map<String, String> startSession(@RequestBody Map<String, String> body) {
-        String masterPlayer = body.get("masterPlayer");
+    public StartSessionResponse startSession(@RequestBody StartSessionRequest body) {
+        String masterPlayer = body.getMasterPlayer();
         String conversationId = conversationService.startSession(masterPlayer);
         PlayerEnum master = conversationService.getMaster(conversationId, masterPlayer);
-        return Map.of("conversationId", conversationId, "masterPlayer", master.name());
+        return StartSessionResponse.builder()
+                .conversationId(conversationId)
+                .masterPlayer(master.name())
+                .build();
     }
 
     @PostMapping("/cancel")
-    public void cancel(@RequestBody Map<String, String> request) {
-        String conversationId = request.get("conversationId");
+    public void cancel(@RequestBody CancelRequest request) {
+        String conversationId = request.getConversationId();
         if (conversationId == null || conversationId.isBlank()) return;
         conversationService.cancel(conversationId);
     }
 
     private void sendSession(SseEmitter emitter, String conversationId) {
-        try {
-            emitter.send(SseEmitter.event()
-                    .name("session")
-                    .data("{\"conversationId\":\"" + conversationId + "\"}"));
-        } catch (Exception e) {
-            log.warn("session 事件发送失败：{}", e.getMessage());
-        }
+        SseUtils.sendSession(emitter, SessionEvent.builder()
+                .conversationId(conversationId)
+                .build());
     }
 }

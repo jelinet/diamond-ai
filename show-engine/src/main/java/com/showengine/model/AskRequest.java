@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 public class AskRequest {
 
-    public enum Phase { INTENT, SELECT_INTENT, CONFIRM_EXECUTE, CANCEL }
+    public enum PhaseEnum { INTENT, SELECT_INTENT, CONFIRM_EXECUTE, CANCEL }
 
     @NotBlank(message = "Question must not be blank")
     @Size(max = 4000, message = "Question must not exceed 4000 characters")
@@ -22,7 +22,7 @@ public class AskRequest {
     private String masterPlayer;
 
     /** Current conversation phase; defaults to INTENT. */
-    private Phase phase;
+    private PhaseEnum phase;
 
     /** Populated when phase=SELECT_INTENT: the intent the user chose from clarification options */
     private String selectedIntent;

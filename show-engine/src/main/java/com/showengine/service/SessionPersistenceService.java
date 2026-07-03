@@ -1,8 +1,9 @@
 package com.showengine.service;
 
 import com.showengine.config.ShowEngineProperties;
+import com.showengine.model.SessionSummary;
+import com.showengine.utils.JacksonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -16,24 +17,22 @@ import java.util.stream.Stream;
 public class SessionPersistenceService {
 
     private final Path dataDir;
-    private final ObjectMapper objectMapper;
 
-    public SessionPersistenceService(ShowEngineProperties props, ObjectMapper objectMapper) throws IOException {
+    public SessionPersistenceService(ShowEngineProperties props) throws IOException {
         this.dataDir = Path.of(props.getSessions().getDataDir()).toAbsolutePath();
-        this.objectMapper = objectMapper;
         Files.createDirectories(dataDir);
         log.info("会话存储目录：{}", dataDir);
     }
 
     public void save(String id, JsonNode session) throws IOException {
-        objectMapper.writeValue(dataDir.resolve(id + ".json").toFile(), session);
+        Files.writeString(dataDir.resolve(id + ".json"), JacksonUtil.toJsonStr(session));
     }
 
     public Optional<JsonNode> load(String id) {
         Path file = dataDir.resolve(id + ".json");
         if (!Files.exists(file)) return Optional.empty();
         try {
-            return Optional.of(objectMapper.readTree(file.toFile()));
+            return Optional.ofNullable(JacksonUtil.toJsonNode(Files.readString(file)));
         } catch (IOException e) {
             log.warn("读取 session 文件失败: {}", file, e);
             return Optional.empty();
@@ -41,12 +40,12 @@ public class SessionPersistenceService {
     }
 
     /** Reads all session summaries, sorted by createdAt descending. */
-    public List<Map<String, Object>> listSummaries() {
+    public List<SessionSummary> listSummaries() {
         return searchSummaries("", Integer.MAX_VALUE);
     }
 
-    public List<Map<String, Object>> searchSummaries(String query, int limit) {
-        List<Map<String, Object>> result = new ArrayList<>();
+    public List<SessionSummary> searchSummaries(String query, int limit) {
+        List<SessionSummary> result = new ArrayList<>();
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
         int maxResults = Math.max(0, limit);
 
@@ -54,17 +53,17 @@ public class SessionPersistenceService {
             files.filter(p -> p.toString().endsWith(".json"))
                  .forEach(file -> {
                      try {
-                         JsonNode node = objectMapper.readTree(file.toFile());
+                         JsonNode node = JacksonUtil.toJsonNode(Files.readString(file));
                          if (isEmptyNewChat(node)) return;
                          if (!matchesSession(node, normalizedQuery)) return;
 
-                         Map<String, Object> summary = new LinkedHashMap<>();
-                         summary.put("id",           node.path("id").asText(""));
-                         summary.put("title",        node.path("title").asText(""));
-                         summary.put("masterPlayer", node.path("masterPlayer").asText(""));
-                         summary.put("createdAt",    node.path("createdAt").asLong(0));
-                         summary.put("lastQuestion", lastQuestion(node));
-                         result.add(summary);
+                         result.add(SessionSummary.builder()
+                                 .id(node.path("id").asText(""))
+                                 .title(node.path("title").asText(""))
+                                 .masterPlayer(node.path("masterPlayer").asText(""))
+                                 .createdAt(node.path("createdAt").asLong(0))
+                                 .lastQuestion(lastQuestion(node))
+                                 .build());
                      } catch (IOException e) {
                          log.warn("跳过损坏的 session 文件: {}", file, e);
                      }
@@ -72,7 +71,7 @@ public class SessionPersistenceService {
         } catch (IOException e) {
             log.error("读取 sessions 目录失败", e);
         }
-        result.sort(Comparator.comparingLong(s -> -((Long) s.get("createdAt"))));
+        result.sort(Comparator.comparingLong(SessionSummary::getCreatedAt).reversed());
         return maxResults >= result.size() ? result : result.subList(0, maxResults);
     }
 

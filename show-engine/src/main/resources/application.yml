@@ -12,7 +12,7 @@ spring:
 show-engine:
   pitcher:
     # Claude Code CLI executable path
-    cli-path: /Users/jelinet/.nvm/versions/node/v24.14.1/bin/claude
+    cli-path: /Users/jelinet/.local/bin/claude
     # Timeout for CLI process in seconds
     timeout-seconds: 60
     # Model to use (passed to claude CLI)
@@ -26,7 +26,7 @@ show-engine:
     model:
   fielder:
     # Codex CLI executable path
-    cli-path: /Users/jelinet/.nvm/versions/node/v24.14.1/bin/codex
+    cli-path: /opt/homebrew/bin/codex
     # Timeout for CLI process in seconds
     timeout-seconds: 60
     # Blank = use Codex CLI default model

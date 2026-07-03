@@ -1,6 +1,6 @@
 package com.showengine.router.model;
 
-import com.showengine.router.enums.IntentSource;
+import com.showengine.router.enums.IntentSourceEnum;
 import com.showengine.router.enums.IntentTypeEnum;
 import com.showengine.enums.PlayerEnum;
 import lombok.Builder;
@@ -27,7 +27,7 @@ public class IntentResult {
      */
     private String reason;
     /** Layer that produced the decision. */
-    private IntentSource source;
+    private IntentSourceEnum source;
     /** Target Players selected by routing. */
     private List<PlayerEnum> routedPlayers;
     /** Answer mode: SINGLE_PLAYER / TWO_PHASE / DEBATE / TASK_PLAN. */
@@ -40,7 +40,7 @@ public class IntentResult {
     }
 
     public IntentResult(IntentTypeEnum intentType, double confidence, String reason,
-                        IntentSource source, List<PlayerEnum> routedPlayers, String finalAnswerMode) {
+                        IntentSourceEnum source, List<PlayerEnum> routedPlayers, String finalAnswerMode) {
         this.intentType = intentType;
         this.confidence = confidence;
         this.reason = reason;

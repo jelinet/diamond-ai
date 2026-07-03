@@ -2,8 +2,9 @@ package com.showengine.service;
 
 import com.showengine.config.ShowEngineProperties;
 import com.showengine.enums.PlayerEnum;
-import com.showengine.model.PlayerResponse;
-import com.showengine.service.impl.CatcherServiceImpl;
+import com.showengine.players.enums.PlayerStatusEnum;
+import com.showengine.players.model.PlayerResponse;
+import com.showengine.players.service.impl.CatcherServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -35,7 +36,7 @@ class CatcherGeminiServiceTest {
 
         assertThat(responses)
                 .extracting(PlayerResponse::getStatus)
-                .containsExactly(PlayerResponse.Status.STREAMING, PlayerResponse.Status.DONE);
+                .containsExactly(PlayerStatusEnum.STREAMING, PlayerStatusEnum.DONE);
 
         assertThat(responses.get(0).getPlayer()).isEqualTo(PlayerEnum.CATCHER);
         assertThat(responses.get(0).getContent()).isEqualTo("2\n");

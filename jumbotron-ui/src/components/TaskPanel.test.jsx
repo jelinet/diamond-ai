@@ -12,14 +12,17 @@ describe('TaskPanel', () => {
       <TaskPanel
         playerStatus={{ PITCHER: 'done', CATCHER: 'thinking', FIELDER: 'idle' }}
         playerTasks={{ CATCHER: 'Round 1 · Analysis' }}
+        playerErrors={{}}
         streaming={{ PITCHER: 'Structured answer', CATCHER: 'Partial answer' }}
         tokens={{ PITCHER: { in: 3, out: 5 } }}
         masterPlayer="PITCHER"
         flowPhase="round1"
+        supervisor={{ state: 'RUNNING_PLAYERS' }}
         onShowPlayerDetail={onShowPlayerDetail}
       />,
     )
 
+    expect(screen.getByText('Running')).toBeInTheDocument()
     expect(screen.getByText('Round 1')).toBeInTheDocument()
     expect(screen.getByText(/Pitcher/).closest('.task-card')).toHaveClass('master')
     expect(screen.getByText('LLM · Claude')).toBeInTheDocument()
@@ -37,6 +40,7 @@ describe('TaskPanel', () => {
       <TaskPanel
         playerStatus={{ PITCHER: 'idle', CATCHER: 'idle', FIELDER: 'idle' }}
         playerTasks={{}}
+        playerErrors={{}}
         streaming={{}}
         tokens={{ PITCHER: { in: 12, out: 8 } }}
         masterPlayer="PITCHER"
@@ -52,5 +56,22 @@ describe('TaskPanel', () => {
     expect(pitcherCard).toHaveTextContent('8')
     expect(pitcherCard).toHaveTextContent('Total')
     expect(pitcherCard).toHaveTextContent('20')
+  })
+
+  it('shows supervisor error messages for failed players', () => {
+    render(
+      <TaskPanel
+        playerStatus={{ PITCHER: 'error', CATCHER: 'idle', FIELDER: 'idle' }}
+        playerTasks={{}}
+        playerErrors={{ PITCHER: 'CLI timed out' }}
+        streaming={{}}
+        tokens={{}}
+        masterPlayer="PITCHER"
+        flowPhase="round1"
+        onShowPlayerDetail={() => {}}
+      />,
+    )
+
+    expect(screen.getByText('CLI timed out')).toBeInTheDocument()
   })
 })

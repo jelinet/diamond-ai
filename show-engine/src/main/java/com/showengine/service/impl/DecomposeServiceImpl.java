@@ -1,11 +1,11 @@
 package com.showengine.service.impl;
 
 import com.showengine.enums.PlayerEnum;
-import com.showengine.model.PlayerResponse;
+import com.showengine.players.enums.PlayerStatusEnum;
 import com.showengine.model.SubTask;
 import com.showengine.service.DecomposeService;
-import com.showengine.service.PlayerService;
-import com.showengine.service.PromptTemplates;
+import com.showengine.players.service.PlayerService;
+import com.showengine.utils.PromptTemplates;
 import com.showengine.utils.JacksonUtil;
 import com.showengine.utils.PlayerFactory;
 import com.showengine.utils.PlayerUtils;
@@ -41,7 +41,7 @@ public class DecomposeServiceImpl implements DecomposeService {
 
         masterService.ask(subConvId, PromptTemplates.executeDecompose(question, master.name(), slave1, slave2),
                 chunk -> {
-                    if (chunk.getStatus() == PlayerResponse.Status.STREAMING) {
+                    if (chunk.getStatus() == PlayerStatusEnum.STREAMING) {
                         buf.append(chunk.getContent());
                     }
                 });

@@ -1,14 +1,14 @@
 package com.showengine.router.service.impl;
 
-import com.showengine.router.enums.IntentSource;
+import com.showengine.players.enums.PlayerStatusEnum;
+import com.showengine.router.enums.IntentSourceEnum;
 import com.showengine.router.enums.IntentTypeEnum;
 import com.showengine.enums.PlayerEnum;
 import com.showengine.model.AskRequest;
 import com.showengine.router.model.IntentResult;
-import com.showengine.model.PlayerResponse;
 import com.showengine.router.service.IntentRouterService;
-import com.showengine.service.PlayerService;
-import com.showengine.service.PromptTemplates;
+import com.showengine.players.service.PlayerService;
+import com.showengine.utils.PromptTemplates;
 import com.showengine.utils.PlayerFactory;
 import com.showengine.utils.PlayerUtils;
 import com.showengine.utils.JacksonUtil;
@@ -41,7 +41,7 @@ public class LlmIntentRouterImpl implements IntentRouterService {
         masterPlayer.ask(askRequest.getConversationId(),
                 PromptTemplates.intentRouter(askRequest.getQuestion()),
                 chunk -> {
-                    if (chunk.getStatus() == PlayerResponse.Status.STREAMING) {
+                    if (chunk.getStatus() == PlayerStatusEnum.STREAMING) {
                         buf.append(chunk.getContent());
                     }
                 });
@@ -80,7 +80,7 @@ public class LlmIntentRouterImpl implements IntentRouterService {
             String reason     = node.path("reason").asText("");
 
             log.info("LlmIntentRouter：intent={} confidence={} reason={}", intentType, confidence, reason);
-            return new IntentResult(intentType, confidence, reason, IntentSource.LLM, null, null);
+            return new IntentResult(intentType, confidence, reason, IntentSourceEnum.LLM, null, null);
 
         } catch (Exception e) {
             log.error("LlmIntentRouter：JSON 解析失败，原始输出：{}", raw, e);
@@ -89,7 +89,7 @@ public class LlmIntentRouterImpl implements IntentRouterService {
     }
 
     private IntentResult unknown(String reason) {
-        return new IntentResult(IntentTypeEnum.UNKNOWN, 0.0, reason, IntentSource.LLM, null, null);
+        return new IntentResult(IntentTypeEnum.UNKNOWN, 0.0, reason, IntentSourceEnum.LLM, null, null);
     }
 
 

@@ -1,14 +1,16 @@
-import { PHASE_PANEL_LABEL, STATUS_LABEL } from '../constants/flow'
+import { PHASE_PANEL_LABEL, STATUS_LABEL, SUPERVISION_STATE_LABEL } from '../constants/flow'
 import { PLAYERS } from '../constants/players'
 
-export function TaskPanel({ playerStatus, playerTasks, streaming, tokens, masterPlayer, flowPhase, onShowPlayerDetail }) {
+export function TaskPanel({ playerStatus, playerTasks, playerErrors = {}, streaming, tokens, masterPlayer, flowPhase, supervisor, onShowPlayerDetail }) {
   const phaseLabel = PHASE_PANEL_LABEL[flowPhase] || ''
+  const stateLabel = supervisor?.state ? SUPERVISION_STATE_LABEL[supervisor.state] || supervisor.state : ''
 
   return (
     <aside className="task-panel">
       <div className="task-panel-header">
         <span>Player Status</span>
         <span className="task-panel-meta">
+          {stateLabel && <span className="task-panel-phase">{stateLabel}</span>}
           {phaseLabel && <span className="task-panel-phase">{phaseLabel}</span>}
         </span>
       </div>
@@ -61,7 +63,7 @@ export function TaskPanel({ playerStatus, playerTasks, streaming, tokens, master
                   <div className="token-row total"><span>Total</span><strong>{tokenInfo.in + tokenInfo.out}</strong></div>
                 </div>
               )}
-              {status === 'error' && <span className="task-error-msg">Failed to respond</span>}
+              {status === 'error' && <span className="task-error-msg">{playerErrors[player.key] || 'Failed to respond'}</span>}
               {status === 'stopped' && <span className="task-stopped-msg">Cancelled</span>}
               {status === 'idle' && !task && !tokenInfo && <span className="task-idle-msg">Ready</span>}
             </div>

@@ -2,13 +2,16 @@ package com.showengine.service;
 
 import com.showengine.enums.PlayerEnum;
 import com.showengine.model.AskRequest;
-import com.showengine.model.PlayerResponse;
-import com.showengine.router.enums.IntentSource;
+import com.showengine.players.model.PlayerResponse;
+import com.showengine.players.service.PlayerService;
+import com.showengine.router.enums.IntentSourceEnum;
 import com.showengine.router.enums.IntentTypeEnum;
 import com.showengine.router.model.IntentResult;
 import com.showengine.router.service.IntentRouterService;
 import com.showengine.service.impl.ConversationServiceImpl;
-import com.showengine.utils.PlayerFactory;
+import com.showengine.supervision.service.SupervisionStateMachine;
+import com.showengine.supervision.service.impl.SupervisorServiceImpl;
+import com.showengine.supervision.service.SupervisorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -39,15 +42,16 @@ class ConversationServiceMentionControlTest {
                 IntentTypeEnum.PLAYER_CONTROL,
                 0.95,
                 "命中控制指令",
-                IntentSource.RULE,
+                IntentSourceEnum.RULE,
                 null,
                 null));
 
-        service = new ConversationServiceImpl(
+        SupervisorService supervisor = new SupervisorServiceImpl(
                 List.of(pitcher, catcher, fielder),
-                router,
                 mock(DecomposeService.class),
-                mock(PlayerFactory.class));
+                new SupervisionStateMachine());
+
+        service = new ConversationServiceImpl(router, supervisor);
     }
 
     @Test

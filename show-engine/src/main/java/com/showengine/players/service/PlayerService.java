@@ -1,7 +1,7 @@
-package com.showengine.service;
+package com.showengine.players.service;
 
 import com.showengine.enums.PlayerEnum;
-import com.showengine.model.PlayerResponse;
+import com.showengine.players.model.PlayerResponse;
 
 import java.util.function.Consumer;
 

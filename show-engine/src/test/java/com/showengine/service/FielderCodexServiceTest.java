@@ -2,8 +2,9 @@ package com.showengine.service;
 
 import com.showengine.config.ShowEngineProperties;
 import com.showengine.enums.PlayerEnum;
-import com.showengine.model.PlayerResponse;
-import com.showengine.service.impl.FielderServiceImpl;
+import com.showengine.players.enums.PlayerStatusEnum;
+import com.showengine.players.model.PlayerResponse;
+import com.showengine.players.service.impl.FielderServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -46,7 +47,7 @@ class FielderCodexServiceTest {
 
         assertThat(responses)
                 .extracting(PlayerResponse::getStatus)
-                .containsExactly(PlayerResponse.Status.STREAMING, PlayerResponse.Status.DONE);
+                .containsExactly(PlayerStatusEnum.STREAMING, PlayerStatusEnum.DONE);
 
         PlayerResponse streaming = responses.get(0);
         assertThat(streaming.getPlayer()).isEqualTo(PlayerEnum.FIELDER);
