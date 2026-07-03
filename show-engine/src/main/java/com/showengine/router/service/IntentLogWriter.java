@@ -1,9 +1,10 @@
 package com.showengine.router.service;
 
 import com.showengine.config.ShowEngineProperties;
-import com.showengine.router.enums.IntentSource;
+import com.showengine.router.enums.IntentSourceEnum;
 import com.showengine.router.enums.IntentTypeEnum;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.showengine.router.model.IntentLogEntry;
+import com.showengine.utils.JacksonUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.Instant;
-import java.util.Map;
 
 /**
  * Writes intent recognition logs asynchronously for later offline training data collection.
@@ -26,7 +26,6 @@ import java.util.Map;
 public class IntentLogWriter {
 
     private final ShowEngineProperties properties;
-    private final ObjectMapper objectMapper;
 
     private Path logDir;
 
@@ -51,18 +50,27 @@ public class IntentLogWriter {
                     IntentTypeEnum ruleIntent, double ruleConf,
                     IntentTypeEnum modelIntent, double modelConf,
                     IntentTypeEnum llmIntent,
-                    IntentTypeEnum finalIntent, IntentSource finalSource) {
+                    IntentTypeEnum finalIntent, IntentSourceEnum finalSource) {
         try {
-            Map<String, Object> entry = Map.of(
-                    "timestamp",   Instant.now().toString(),
-                    "query",       query,
-                    "rule",        Map.of("intent", ruleIntent, "confidence", ruleConf),
-                    "model",       Map.of("intent", modelIntent, "confidence", modelConf),
-                    "llm",         llmIntent != null ? llmIntent.name() : "N/A",
-                    "final",       Map.of("intent", finalIntent, "source", finalSource)
-            );
+            IntentLogEntry entry = IntentLogEntry.builder()
+                    .timestamp(Instant.now().toString())
+                    .query(query)
+                    .rule(IntentLogEntry.IntentLogDecision.builder()
+                            .intent(ruleIntent)
+                            .confidence(ruleConf)
+                            .build())
+                    .model(IntentLogEntry.IntentLogDecision.builder()
+                            .intent(modelIntent)
+                            .confidence(modelConf)
+                            .build())
+                    .llm(llmIntent != null ? llmIntent.name() : "N/A")
+                    .finalDecision(IntentLogEntry.IntentLogFinalDecision.builder()
+                            .intent(finalIntent)
+                            .source(finalSource)
+                            .build())
+                    .build();
 
-            String line = objectMapper.writeValueAsString(entry) + "\n";
+            String line = JacksonUtil.toJsonStr(entry) + "\n";
             Path file = logDir.resolve(LocalDate.now() + ".jsonl");
             Files.writeString(file, line, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (Exception e) {

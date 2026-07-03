@@ -56,10 +56,12 @@ export default function App() {
       <TaskPanel
         playerStatus={chat.playerStatus}
         playerTasks={chat.playerTasks}
+        playerErrors={chat.playerErrors}
         streaming={chat.streaming}
         tokens={chat.tokens}
         masterPlayer={masterPlayer}
         flowPhase={chat.flowPhase}
+        supervisor={chat.supervisor}
         onShowPlayerDetail={chat.showPlayerDetail}
       />
     </div>

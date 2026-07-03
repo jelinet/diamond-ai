@@ -1,6 +1,6 @@
 package com.showengine.router.service.impl;
 
-import com.showengine.router.enums.IntentSource;
+import com.showengine.router.enums.IntentSourceEnum;
 import com.showengine.router.enums.IntentTypeEnum;
 import com.showengine.model.AskRequest;
 import com.showengine.router.model.IntentResult;
@@ -147,6 +147,6 @@ public class RuleBasedIntentRouterImpl implements IntentRouterService {
     }
 
     private IntentResult ruleResult(IntentTypeEnum type, double confidence, String reason) {
-        return new IntentResult(type, confidence, reason, IntentSource.RULE, null, null);
+        return new IntentResult(type, confidence, reason, IntentSourceEnum.RULE, null, null);
     }
 }

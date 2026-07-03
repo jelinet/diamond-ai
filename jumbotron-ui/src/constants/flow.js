@@ -31,6 +31,17 @@ export const PHASE_PANEL_LABEL = {
   [PHASES.ASSEMBLING]: 'Assembling',
 }
 
+export const SUPERVISION_STATE_LABEL = {
+  PLAN_CREATED: 'Planned',
+  DECOMPOSING: 'Decomposing',
+  WAITING_USER_CONFIRMATION: 'Awaiting confirmation',
+  RUNNING_PLAYERS: 'Running',
+  ASSEMBLING_RESULT: 'Assembling',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+  FAILED: 'Failed',
+}
+
 export const PLAYER_WORK_PHASES = new Set([
   PHASES.ROUND_1,
   PHASES.ROUND_2,
@@ -52,6 +63,7 @@ export const EVENT = {
   DECOMPOSITION: 'DECOMPOSITION',
   AWAITING_CONFIRMATION: 'AWAITING_CONFIRMATION',
   CLARIFICATION: 'CLARIFICATION',
+  SUPERVISOR: 'SUPERVISOR',
   DONE: 'DONE',
 }
 

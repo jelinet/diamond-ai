@@ -1,9 +1,9 @@
-package com.showengine.service.impl;
+package com.showengine.players.service.impl;
 
 import com.showengine.config.ShowEngineProperties;
 import com.showengine.enums.PlayerEnum;
-import com.showengine.model.PlayerResponse;
-import com.showengine.service.PlayerService;
+import com.showengine.players.model.PlayerResponse;
+import com.showengine.players.service.PlayerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

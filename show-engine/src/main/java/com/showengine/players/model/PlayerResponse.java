@@ -1,6 +1,7 @@
-package com.showengine.model;
+package com.showengine.players.model;
 
 import com.showengine.enums.PlayerEnum;
+import com.showengine.players.enums.PlayerStatusEnum;
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,20 +12,11 @@ import lombok.Data;
 @Builder
 public class PlayerResponse {
 
-    public enum Status {
-        /** Chunk of streamed text */
-        STREAMING,
-        /** Final response with token stats */
-        DONE,
-        /** Error occurred */
-        ERROR
-    }
-
     /** Which player this response belongs to */
     private PlayerEnum player;
 
     /** Current status of the response */
-    private Status status;
+    private PlayerStatusEnum status;
 
     /** Text chunk (for STREAMING) or full response (for DONE) */
     private String content;
@@ -43,7 +35,7 @@ public class PlayerResponse {
     public static PlayerResponse streaming(PlayerEnum player, String chunk) {
         return PlayerResponse.builder()
                 .player(player)
-                .status(Status.STREAMING)
+                .status(PlayerStatusEnum.STREAMING)
                 .content(chunk)
                 .build();
     }
@@ -52,7 +44,7 @@ public class PlayerResponse {
                                       int inputTokens, int outputTokens) {
         return PlayerResponse.builder()
                 .player(player)
-                .status(Status.DONE)
+                .status(PlayerStatusEnum.DONE)
                 .content(fullContent)
                 .inputTokens(inputTokens)
                 .outputTokens(outputTokens)
@@ -62,7 +54,7 @@ public class PlayerResponse {
     public static PlayerResponse error(PlayerEnum player, String message) {
         return PlayerResponse.builder()
                 .player(player)
-                .status(Status.ERROR)
+                .status(PlayerStatusEnum.ERROR)
                 .errorMessage(message)
                 .build();
     }

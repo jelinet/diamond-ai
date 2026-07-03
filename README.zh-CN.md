@@ -79,18 +79,23 @@ Diamond AI 把不同 AI 能力抽象成三个 Player：
   - 规则层
   - 本地 ONNX 分类器层
   - LLM 兜底层
+- 独立 Supervisor 层：
+  - 将 Router 结果转换为执行计划
+  - 调度单 Agent、代码两阶段、三 Agent 辩论和任务分解执行
+  - 通过 SSE 输出 Supervisor / Player 运行状态
+  - 支持基础失败降级，单个 Player 失败时尽量继续汇总
 - 多 Agent 任务支持先分解任务，用户确认后并行执行，再由 Master 汇总。
 
 ## 尚未实现
 
 当前主要缺口：
 
-- 还没有独立 Supervisor 层。
 - 还没有通用 Tools 抽象。
 - 还没有 ReAct 循环。
 - 还没有 RAG 层。
 - Memory 目前主要是会话持久化。
 - Reflection 只有结构雏形，还没有自主反思能力。
+- Supervisor 仍缺少持久化恢复、细粒度重试、暂停/恢复和质量评估回流。
 
 ## 后端：`show-engine`
 

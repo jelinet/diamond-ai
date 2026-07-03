@@ -27,6 +27,20 @@ function createEmptyTasks() {
   return Object.fromEntries(PLAYER_KEYS.map(key => [key, '']))
 }
 
+function supervisorStatusToUi(status) {
+  switch (status) {
+    case 'RUNNING':
+      return STATUS.THINKING
+    case 'DONE':
+      return STATUS.DONE
+    case 'ERROR':
+      return STATUS.ERROR
+    case 'PENDING':
+    default:
+      return STATUS.IDLE
+  }
+}
+
 function phaseOutputKey(phase) {
   if (phase === PHASES.ROUND_2) return 'round2'
   if (phase === PHASES.EXECUTING) return 'exec'
@@ -68,6 +82,7 @@ function createTurn(id, question) {
     currentPhase: null,
     subtasks: null,
     visiblePlayers: [],
+    supervisor: null,
   }
 }
 
@@ -81,6 +96,7 @@ function normalizeTurn(turn) {
     currentPhase: turn?.currentPhase || null,
     subtasks: turn?.subtasks || null,
     visiblePlayers: turn?.visiblePlayers || Object.keys(turn?.answers || {}),
+    supervisor: turn?.supervisor || null,
   }
 }
 
@@ -125,6 +141,7 @@ export function useAsk() {
   const [activeId, setActiveId] = useState(null)
   const [playerStatus, setPlayerStatus] = useState({})
   const [playerTasks, setPlayerTasks] = useState({})
+  const [playerErrors, setPlayerErrors] = useState({})
   const [loadingByConversation, setLoadingByConversation] = useState({})
   const [masterSelectPending, setMasterSelectPending] = useState(false)
   const [flowPhase, setFlowPhase] = useState(null)
@@ -212,6 +229,7 @@ export function useAsk() {
     setPendingDecomposition(null)
     setAwaitingConfirmation(false)
     setClarificationOptions(null)
+    setPlayerErrors({})
   }
 
   const createRemoteSession = async (masterPlayer) => {
@@ -247,6 +265,11 @@ export function useAsk() {
       if (isActiveConversation(conversationId)) {
         setPlayerStatus(prev => ({ ...prev, [player]: STATUS.DONE }))
         setPlayerTasks(prev => ({ ...prev, [player]: '' }))
+        setPlayerErrors(prev => {
+          const next = { ...prev }
+          delete next[player]
+          return next
+        })
       }
       if (msg.content) {
         acc[player] = msg.content
@@ -268,8 +291,40 @@ export function useAsk() {
       if (isActiveConversation(conversationId)) {
         setPlayerStatus(prev => ({ ...prev, [player]: STATUS.ERROR }))
         setPlayerTasks(prev => ({ ...prev, [player]: '' }))
+        setPlayerErrors(prev => ({ ...prev, [player]: msg.errorMessage || 'Failed to respond' }))
       }
     }
+  }
+
+  const handleSupervisorEvent = (msg, conversationId, turnId) => {
+    const players = msg.players || {}
+    const errors = msg.errors || {}
+    const nextStatus = Object.fromEntries(
+      Object.entries(players).map(([player, status]) => [player, supervisorStatusToUi(status)]),
+    )
+
+    updateTurn(conversationId, turnId, turn => ({
+      ...turn,
+      currentPhase: msg.phase || turn.currentPhase,
+      supervisor: msg,
+      visiblePlayers: Array.from(new Set([
+        ...(turn.visiblePlayers || []),
+        ...Object.keys(players),
+      ])),
+    }))
+
+    if (!isActiveConversation(conversationId)) return
+
+    if (msg.phase) {
+      phaseRef.current = msg.phase
+      setFlowPhase(msg.phase)
+    }
+
+    if (Object.keys(nextStatus).length > 0) {
+      setPlayerStatus(prev => ({ ...prev, ...nextStatus }))
+    }
+
+    setPlayerErrors(errors)
   }
 
   const handlePhaseEvent = (phase, acc, conversationId, turnId) => {
@@ -314,6 +369,10 @@ export function useAsk() {
 
       case EVENT.PHASE:
         handlePhaseEvent(msg.phase, acc, conversationId, turnId)
+        break
+
+      case EVENT.SUPERVISOR:
+        handleSupervisorEvent(msg, conversationId, turnId)
         break
 
       case EVENT.INTENT:
@@ -404,6 +463,7 @@ export function useAsk() {
             Object.fromEntries(Object.entries(prev).map(([key, value]) => [key, value === STATUS.THINKING ? STATUS.DONE : value]))
           )
           setPlayerTasks(createEmptyTasks())
+          setPlayerErrors({})
         }
         break
     }
@@ -446,6 +506,7 @@ export function useAsk() {
       if (error.name === 'AbortError') return
       if (isActiveConversation(conversationId)) {
         setPlayerStatus(createEmptyStatus(STATUS.ERROR))
+        setPlayerErrors({})
       }
     })
   }
@@ -504,6 +565,7 @@ export function useAsk() {
     setPlayerStatus(prev =>
       Object.fromEntries(Object.entries(prev).map(([key, value]) => [key, value === STATUS.THINKING ? STATUS.STOPPED : value]))
     )
+    setPlayerErrors({})
   }
 
   const confirmPlan = () => {
@@ -516,6 +578,7 @@ export function useAsk() {
     setPendingDecomposition(null)
     phaseRef.current = null
     setPlayerStatus(createEmptyStatus())
+    setPlayerErrors({})
 
     startStream({
       question: lastQuestionRef.current,
@@ -534,6 +597,7 @@ export function useAsk() {
     setPendingDecomposition(null)
     setConversationLoading(conversationId, false)
     setPlayerStatus({})
+    setPlayerErrors({})
   }
 
   const selectIntent = (selectedIntent) => {
@@ -544,6 +608,7 @@ export function useAsk() {
     setClarificationOptions(null)
     phaseRef.current = null
     setPlayerStatus(createEmptyStatus())
+    setPlayerErrors({})
 
     startStream({
       question: lastQuestionRef.current,
@@ -578,6 +643,7 @@ export function useAsk() {
     setActiveConversation(normalized.id)
     setMaster(normalized.masterPlayer || 'PITCHER')
     setPlayerStatus({})
+    setPlayerErrors({})
     resetFlow()
 
     try {
@@ -601,10 +667,12 @@ export function useAsk() {
       setMasterSelectPending(false)
     } catch (error) {
       setPlayerStatus(createEmptyStatus(STATUS.ERROR))
+      setPlayerErrors({})
       return
     }
     setPlayerStatus({})
     setPlayerTasks({})
+    setPlayerErrors({})
     resetFlow()
   }
 
@@ -636,6 +704,7 @@ export function useAsk() {
       startStream({ question, conversationId, masterPlayer: master }, turnId, conversationId)
     } catch (error) {
       setPlayerStatus(createEmptyStatus(STATUS.ERROR))
+      setPlayerErrors({})
     }
   }
 
@@ -661,8 +730,10 @@ export function useAsk() {
     tokens: sessionTokens,
     playerStatus,
     playerTasks,
+    playerErrors,
     isLoading,
     flowPhase,
+    supervisor: activeTurn?.supervisor || null,
     pendingDecomposition,
     awaitingConfirmation,
     clarificationOptions,

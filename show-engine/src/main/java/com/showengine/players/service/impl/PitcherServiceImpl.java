@@ -1,11 +1,11 @@
-package com.showengine.service.impl;
+package com.showengine.players.service.impl;
 
 import com.showengine.config.ShowEngineProperties;
 import com.showengine.enums.PlayerEnum;
-import com.showengine.model.PlayerResponse;
-import com.showengine.service.PlayerService;
+import com.showengine.players.model.PlayerResponse;
+import com.showengine.players.service.PlayerService;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.showengine.utils.JacksonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 public class PitcherServiceImpl implements PlayerService {
 
     private final ShowEngineProperties props;
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final Set<String> activeSessions = ConcurrentHashMap.newKeySet();
     private final ConcurrentHashMap<String, Process> activeProcesses = new ConcurrentHashMap<>();
 
@@ -87,7 +86,7 @@ public class PitcherServiceImpl implements PlayerService {
                 while ((line = reader.readLine()) != null) {
                     if (line.isBlank()) continue;
                     try {
-                        JsonNode node = objectMapper.readTree(line);
+                        JsonNode node = JacksonUtil.toJsonNode(line);
                         String type = node.path("type").asText();
 
                         switch (type) {

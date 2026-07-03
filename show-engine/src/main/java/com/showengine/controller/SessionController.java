@@ -1,14 +1,14 @@
 package com.showengine.controller;
 
-import com.showengine.service.SessionPersistenceService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.showengine.model.SessionSummary;
+import com.showengine.service.SessionPersistenceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -18,12 +18,12 @@ public class SessionController {
     private final SessionPersistenceService sessionPersistenceService;
 
     @GetMapping
-    public List<Map<String, Object>> list() {
+    public List<SessionSummary> list() {
         return sessionPersistenceService.listSummaries();
     }
 
     @GetMapping("/search")
-    public List<Map<String, Object>> search(
+    public List<SessionSummary> search(
             @RequestParam(defaultValue = "") String q,
             @RequestParam(defaultValue = "10") int limit
     ) {

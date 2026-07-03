@@ -1,14 +1,13 @@
 package com.showengine.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.showengine.config.ShowEngineProperties;
+import com.showengine.model.SessionSummary;
+import com.showengine.utils.JacksonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,7 +19,7 @@ class SessionPersistenceServiceTest {
     private SessionPersistenceService service() throws Exception {
         ShowEngineProperties properties = new ShowEngineProperties();
         properties.getSessions().setDataDir(dataDir.toString());
-        return new SessionPersistenceService(properties, new ObjectMapper());
+        return new SessionPersistenceService(properties);
     }
 
     @Test
@@ -30,9 +29,9 @@ class SessionPersistenceServiceTest {
         saveSession(service, "middle", "Middle chat", 2, "second question");
         saveSession(service, "newer", "Newer chat", 3, "third question");
 
-        List<Map<String, Object>> summaries = service.searchSummaries("", 2);
+        List<SessionSummary> summaries = service.searchSummaries("", 2);
 
-        assertThat(summaries).extracting(summary -> summary.get("id"))
+        assertThat(summaries).extracting(SessionSummary::getId)
                 .containsExactly("newer", "middle");
     }
 
@@ -42,11 +41,11 @@ class SessionPersistenceServiceTest {
         saveSession(service, "roadmap", "Roadmap", 1, "Plan release work");
         saveSession(service, "debug", "Debugging", 2, "Find search bug");
 
-        List<Map<String, Object>> summaries = service.searchSummaries("search bug", 10);
+        List<SessionSummary> summaries = service.searchSummaries("search bug", 10);
 
         assertThat(summaries).hasSize(1);
-        assertThat(summaries.get(0).get("id")).isEqualTo("debug");
-        assertThat(summaries.get(0).get("lastQuestion")).isEqualTo("Find search bug");
+        assertThat(summaries.get(0).getId()).isEqualTo("debug");
+        assertThat(summaries.get(0).getLastQuestion()).isEqualTo("Find search bug");
     }
 
     @Test
@@ -55,34 +54,33 @@ class SessionPersistenceServiceTest {
         saveEmptySession(service, "empty", "New conversation", 3);
         saveSession(service, "chat", "Real chat", 2, "hello");
 
-        List<Map<String, Object>> summaries = service.searchSummaries("", 10);
+        List<SessionSummary> summaries = service.searchSummaries("", 10);
 
-        assertThat(summaries).extracting(summary -> summary.get("id"))
+        assertThat(summaries).extracting(SessionSummary::getId)
                 .containsExactly("chat");
     }
 
     private void saveSession(SessionPersistenceService service, String id, String title, long createdAt, String question) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode session = mapper.createObjectNode();
-        session.put("id", id);
-        session.put("title", title);
-        session.put("masterPlayer", "PITCHER");
-        session.put("createdAt", createdAt);
-        session.putArray("turns")
-                .addObject()
-                .put("id", id + "-turn")
-                .put("question", question);
-        service.save(id, session);
+        service.save(id, JacksonUtil.toJsonNode("""
+                {
+                  "id": "%s",
+                  "title": "%s",
+                  "masterPlayer": "PITCHER",
+                  "createdAt": %d,
+                  "turns": [{"id": "%s-turn", "question": "%s"}]
+                }
+                """.formatted(id, title, createdAt, id, question)));
     }
 
     private void saveEmptySession(SessionPersistenceService service, String id, String title, long createdAt) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode session = mapper.createObjectNode();
-        session.put("id", id);
-        session.put("title", title);
-        session.put("masterPlayer", "PITCHER");
-        session.put("createdAt", createdAt);
-        session.putArray("turns");
-        service.save(id, session);
+        service.save(id, JacksonUtil.toJsonNode("""
+                {
+                  "id": "%s",
+                  "title": "%s",
+                  "masterPlayer": "PITCHER",
+                  "createdAt": %d,
+                  "turns": []
+                }
+                """.formatted(id, title, createdAt)));
     }
 }

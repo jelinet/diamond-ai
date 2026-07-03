@@ -1,12 +1,11 @@
 package com.showengine.service;
 
 import com.showengine.config.ShowEngineProperties;
-import com.showengine.router.enums.IntentSource;
+import com.showengine.router.enums.IntentSourceEnum;
 import com.showengine.router.enums.IntentTypeEnum;
 import com.showengine.model.AskRequest;
 import com.showengine.router.model.IntentResult;
 import com.showengine.router.service.impl.HybridIntentRouterImpl;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +27,7 @@ class ModelIntentRouterTest {
         ShowEngineProperties.Classifier cfg = new ShowEngineProperties.Classifier();
         cfg.setEnabled(false); // Disable it so model files are not loaded.
         props.setClassifier(cfg);
-        router = new HybridIntentRouterImpl.ModelIntentRouterImpl(props, new ObjectMapper());
+        router = new HybridIntentRouterImpl.ModelIntentRouterImpl(props);
         // Do not call init(); this simulates the model-not-ready state.
     }
 
@@ -39,7 +38,7 @@ class ModelIntentRouterTest {
         IntentResult result = router.route(req);
         assertThat(result.getIntentType()).isEqualTo(IntentTypeEnum.UNKNOWN);
         assertThat(result.getConfidence()).isEqualTo(0.0);
-        assertThat(result.getSource()).isEqualTo(IntentSource.MODEL);
+        assertThat(result.getSource()).isEqualTo(IntentSourceEnum.MODEL);
     }
 
     @Test
