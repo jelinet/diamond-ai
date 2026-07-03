@@ -35,7 +35,7 @@ show-engine:
     data-dir: ${user.home}/.show-engine/sessions
   classifier:
     enabled: true
-    confidence-threshold: 0.75
+    confidence-threshold: 0.80
     prototypes-path: ${SHOW_ENGINE_MODEL_DIR:${user.dir}/../model/v1}/prototypes.json
     model-path: ${SHOW_ENGINE_MODEL_DIR:${user.dir}/../model/v1}/encoder.onnx
     log-dir: ${user.home}/.show-engine/intent-logs
