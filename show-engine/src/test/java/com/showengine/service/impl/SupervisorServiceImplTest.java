@@ -62,6 +62,24 @@ class SupervisorServiceImplTest {
     }
 
     @Test
+    void codeFlowUsesCurrentMasterPlayer() {
+        PlayerService pitcher = player(PlayerEnum.PITCHER, false);
+        PlayerService catcher = player(PlayerEnum.CATCHER, false);
+        SupervisorServiceImpl service = new SupervisorServiceImpl(
+                List.of(pitcher, catcher),
+                mock(DecomposeService.class),
+                new SupervisionStateMachine());
+
+        SupervisorContext context = context(IntentTypeEnum.CODE, PlayerEnum.CATCHER);
+        context.setEmitter(mock(SseEmitter.class));
+
+        service.supervise(context);
+
+        verify(catcher, times(2)).ask(anyString(), anyString(), any());
+        verify(pitcher, never()).ask(anyString(), anyString(), any());
+    }
+
+    @Test
     void debateContinuesWhenOnePlayerThrows() {
         PlayerService pitcher = player(PlayerEnum.PITCHER, true);
         PlayerService catcher = player(PlayerEnum.CATCHER, false);

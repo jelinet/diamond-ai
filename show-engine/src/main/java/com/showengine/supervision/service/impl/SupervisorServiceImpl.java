@@ -228,13 +228,14 @@ public class SupervisorServiceImpl implements SupervisorService {
         SseEmitter emitter = context.getEmitter();
         String conversationId = context.getConversationId();
         String question = context.getQuestion();
-        PlayerService pitcher = findPlayer(PlayerEnum.PITCHER.name());
+        PlayerEnum codePlayer = context.getMasterPlayer();
+        PlayerService player = findPlayer(codePlayer.name());
 
         sendPhase(emitter, "analyzing");
         markPhase(emitter, conversationId, "analyzing", SupervisionEventEnum.START_PLAYERS);
         StringBuilder analysisBuf = new StringBuilder();
-        markPlayerRunning(emitter, conversationId, PlayerEnum.PITCHER);
-        askPlayer(emitter, conversationId, pitcher, "code-analyze",
+        markPlayerRunning(emitter, conversationId, codePlayer);
+        askPlayer(emitter, conversationId, player, "code-analyze",
                 PromptTemplates.codeAnalyze(question), chunk -> {
                     if (chunk.getStatus() == PlayerStatusEnum.STREAMING) {
                         synchronized (analysisBuf) { analysisBuf.append(chunk.getContent()); }
@@ -246,8 +247,8 @@ public class SupervisorServiceImpl implements SupervisorService {
 
         sendPhase(emitter, "answering");
         markPhase(emitter, conversationId, "answering");
-        markPlayerRunning(emitter, conversationId, PlayerEnum.PITCHER);
-        askPlayer(emitter, conversationId, pitcher, "code-solve",
+        markPlayerRunning(emitter, conversationId, codePlayer);
+        askPlayer(emitter, conversationId, player, "code-solve",
                 PromptTemplates.codeSolve(question, analysisBuf.toString()),
                 chunk -> {
                     updatePlayerStateFromChunk(emitter, conversationId, chunk);
